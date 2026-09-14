@@ -1,0 +1,1393 @@
+﻿PROJECT NAME:
+Sales Rep Daily Picture Report PDF Creator
+
+PROJECT TYPE:
+Lightweight web application for creating professional PDF reports from sales representative photographs.
+
+==================================================
+1. PROJECT OBJECTIVE
+==================================================
+
+Build a lightweight web application that allows sales representatives or office staff to:
+
+1. Upload multiple report pictures.
+2. Preview the uploaded pictures.
+3. Reorder pictures using drag and drop.
+4. Rotate pictures.
+5. Delete pictures.
+6. Automatically handle pictures with different/random dimensions.
+7. Automatically fit every picture correctly onto an A4 PDF page.
+8. Preserve the original image aspect ratio.
+9. Prevent image stretching or distortion.
+10. Add optional report information.
+11. Generate a professional PDF.
+12. Preview the PDF/report before downloading.
+13. Download the generated PDF.
+14. Eventually support PDF security/password protection if technically supported by the approved stack.
+15. Keep the application lightweight and processor-efficient.
+
+IMPORTANT:
+The timestamps are ALREADY EMBEDDED INSIDE THE IMAGES.
+
+The sales representatives have already edited their photographs before submitting them, and the timestamp is visible as part of the actual image.
+
+DO NOT implement OCR.
+DO NOT attempt to extract timestamps from EXIF metadata.
+DO NOT attempt to generate timestamps.
+DO NOT modify or recreate the timestamp.
+
+The timestamp contained in the image must remain exactly as it appears in the submitted image.
+
+==================================================
+2. DEVELOPMENT ENVIRONMENT
+==================================================
+
+The project is already created using:
+
+- React
+- TypeScript
+- Vite
+- Tailwind CSS
+- ESLint
+
+Operating environment:
+
+- Windows
+- Visual Studio Code
+- Node.js
+- npm
+- Local development through Vite
+
+The project is located inside:
+
+sales_docu/sales-report-pdf/
+
+The package.json already exists inside the project root.
+
+All npm dependencies must be installed INSIDE the sales-report-pdf project.
+
+DO NOT create another Node project.
+DO NOT create another package.json.
+DO NOT create another node_modules folder outside the project.
+
+The project must remain a standard Vite React TypeScript application.
+
+==================================================
+3. CURRENTLY APPROVED DEPENDENCIES
+==================================================
+
+The following dependencies have already been approved and installed:
+
+Production/runtime dependencies:
+
+- jspdf
+- browser-image-compression
+- @dnd-kit/core
+- @dnd-kit/sortable
+- @dnd-kit/utilities
+- lucide-react
+
+Development/build dependencies already installed:
+
+- tailwindcss
+- @tailwindcss/vite
+
+Existing development tooling:
+
+- ESLint
+- TypeScript
+- Vite
+
+==================================================
+4. STRICT DEPENDENCY RULE
+==================================================
+
+THIS IS EXTREMELY IMPORTANT.
+
+DO NOT install any new npm package without asking me first.
+
+If you determine that a feature requires:
+
+- npm package
+- JavaScript library
+- React library
+- external SDK
+- backend service
+- database
+- API
+- browser extension
+- command line tool
+- executable
+- system dependency
+- third-party service
+
+STOP BEFORE INSTALLING IT.
+
+Tell me:
+
+1. What dependency you want to install.
+2. Why it is required.
+3. What feature requires it.
+4. Whether the feature can be implemented without it.
+5. What impact it has on project size/performance.
+6. The exact npm install command you intend to use.
+
+Then WAIT FOR MY APPROVAL.
+
+Never automatically run:
+
+npm install
+
+for a new dependency.
+
+Never replace an existing approved dependency with another library without asking.
+
+==================================================
+5. DO NOT ADD UNNECESSARY TECHNOLOGY
+==================================================
+
+Do NOT introduce:
+
+- Redux
+- Zustand
+- Firebase
+- Supabase
+- Axios
+- React Router
+- Next.js
+- Express
+- Node backend
+- Python
+- Docker
+- Electron
+- MongoDB
+- MySQL
+- PostgreSQL
+- Prisma
+- ORM
+- GraphQL
+- REST API
+- OCR libraries
+- AI services
+- cloud processing
+- image-processing servers
+- unnecessary UI frameworks
+
+unless I explicitly approve them.
+
+The first version must be CLIENT-SIDE ONLY.
+
+==================================================
+6. ARCHITECTURE
+==================================================
+
+Use this architecture:
+
+Browser
+   |
+   |-- Image Upload
+   |
+   |-- Image Preview
+   |
+   |-- Image Editing
+   |
+   |-- Image Ordering
+   |
+   |-- Image Compression
+   |
+   |-- PDF Generation
+   |
+   â””-- PDF Download
+
+No backend is required for the first version.
+
+Images should remain in the user's browser during normal report creation.
+
+Do not upload images to an external server.
+
+Do not store images permanently.
+
+Do not create a database.
+
+The application should work without user accounts.
+
+==================================================
+7. APPLICATION WORKFLOW
+==================================================
+
+The intended workflow is:
+
+STEP 1
+User opens the application.
+
+STEP 2
+User creates a new report.
+
+STEP 3
+User optionally enters:
+
+- Report title
+- Sales representative name
+- Date
+- Customer/client name
+- Location
+- Optional notes
+
+These fields should be optional unless otherwise specified.
+
+STEP 4
+User uploads multiple images.
+
+STEP 5
+Application displays uploaded images as thumbnails.
+
+STEP 6
+User can:
+
+- reorder
+- rotate
+- delete
+- preview
+
+STEP 7
+Application automatically processes images for PDF generation.
+
+STEP 8
+Each image is placed onto an A4 page.
+
+STEP 9
+Image maintains original aspect ratio.
+
+STEP 10
+Image is scaled to fit inside the available page area.
+
+STEP 11
+Image is never stretched.
+
+STEP 12
+User previews the report.
+
+STEP 13
+User generates the final PDF.
+
+STEP 14
+User downloads the PDF.
+
+==================================================
+8. UI DESIGN
+==================================================
+
+The UI must be:
+
+- Minimal
+- Professional
+- Clean
+- Fast
+- Responsive
+- Easy for non-technical sales staff
+- Desktop-first
+- Usable on tablets
+
+Avoid unnecessary animations.
+
+Avoid excessive gradients.
+
+Avoid excessive shadows.
+
+Avoid complicated navigation.
+
+The application should feel like an internal business tool rather than a consumer social-media application.
+
+==================================================
+9. MAIN UI STRUCTURE
+==================================================
+
+Create the following general structure:
+
+--------------------------------------------------
+HEADER
+--------------------------------------------------
+
+Application name:
+
+Sales Report PDF Creator
+
+Actions:
+
+New Report
+Generate PDF
+
+--------------------------------------------------
+REPORT INFORMATION
+--------------------------------------------------
+
+Fields:
+
+Report Title
+Sales Representative
+Report Date
+Customer / Client
+Location
+Notes
+
+All fields should be easy to edit.
+
+--------------------------------------------------
+IMAGE UPLOAD AREA
+--------------------------------------------------
+
+Large drag-and-drop area.
+
+Example:
+
+"Drag & drop pictures here"
+
+and:
+
+"or select pictures"
+
+Allow multiple image selection.
+
+Accepted formats:
+
+- JPG
+- JPEG
+- PNG
+- WEBP
+
+Do not add support for unnecessary formats unless required.
+
+--------------------------------------------------
+IMAGE LIST
+--------------------------------------------------
+
+Display uploaded pictures in a clean grid.
+
+Each image card should show:
+
+- Thumbnail
+- Image number
+- Rotate button
+- Delete button
+- Drag handle
+
+Users must be able to reorder images.
+
+Use the already-installed dnd-kit packages.
+
+--------------------------------------------------
+PREVIEW AREA
+--------------------------------------------------
+
+Provide a report preview.
+
+Show:
+
+- A4 page
+- Page margins
+- Image placement
+- Report information
+- Page count
+
+The preview should resemble the final PDF as closely as reasonably possible.
+
+--------------------------------------------------
+BOTTOM ACTION AREA
+--------------------------------------------------
+
+Buttons:
+
+Clear All
+Preview PDF
+Generate PDF
+
+Generate PDF should be visually prominent.
+
+==================================================
+10. IMAGE HANDLING
+==================================================
+
+This is one of the most important parts of the project.
+
+Sales representatives may submit images with completely different dimensions.
+
+Examples:
+
+1920 x 1080
+1080 x 1920
+4032 x 3024
+3024 x 4032
+1200 x 1600
+800 x 600
+
+The application must automatically handle all of these.
+
+DO NOT assume all images are the same size.
+
+DO NOT crop images by default.
+
+DO NOT stretch images.
+
+DO NOT distort images.
+
+The default behavior should be:
+
+CONTAIN / FIT INSIDE PAGE.
+
+The image should be scaled proportionally until it fits within the allowed PDF content area.
+
+==================================================
+11. IMAGE ASPECT RATIO
+==================================================
+
+Always preserve the original aspect ratio.
+
+For example:
+
+Landscape image:
+1920 x 1080
+
+should remain approximately:
+
+16:9
+
+Portrait image:
+
+1080 x 1920
+
+should remain approximately:
+
+9:16
+
+Never independently modify width and height.
+
+Use proportional scaling.
+
+==================================================
+12. IMAGE COMPRESSION
+==================================================
+
+Use the already-installed:
+
+browser-image-compression
+
+to reduce unnecessarily large images before PDF generation.
+
+The objective is:
+
+- Reduce browser memory usage.
+- Reduce PDF size.
+- Improve generation speed.
+- Maintain acceptable image quality.
+
+Do not aggressively compress images.
+
+The report must remain readable.
+
+Especially preserve the timestamp text embedded in the image.
+
+The timestamp must remain clearly readable after compression.
+
+==================================================
+13. PDF FORMAT
+==================================================
+
+Use the already-installed:
+
+jsPDF
+
+PDF default:
+
+A4
+
+Use standard A4 dimensions.
+
+Support:
+
+- Portrait pages
+- Landscape pages if appropriate
+
+The application must determine the appropriate page orientation based on the image/report layout.
+
+Do not rotate or crop the actual image unnecessarily.
+
+==================================================
+14. PDF FIT-TO-PAGE ALGORITHM
+==================================================
+
+Implement a reliable fit-to-page algorithm.
+
+For every image:
+
+1. Determine image width and height.
+2. Determine its aspect ratio.
+3. Determine available PDF content width and height.
+4. Calculate the maximum proportional scale.
+5. Scale width and height using the SAME scale factor.
+6. Center the image on the page.
+7. Keep consistent margins.
+8. Never allow the image to exceed the page.
+9. Never stretch the image.
+
+Conceptually:
+
+scale = minimum(
+    availableWidth / imageWidth,
+    availableHeight / imageHeight
+)
+
+finalWidth = imageWidth * scale
+
+finalHeight = imageHeight * scale
+
+Then center:
+
+x = (pageWidth - finalWidth) / 2
+
+y = (pageHeight - finalHeight) / 2
+
+Adjust this algorithm if report headers/footers are present.
+
+==================================================
+15. PAGE LAYOUT
+==================================================
+
+Use professional margins.
+
+Do not allow images to touch the physical edge of the PDF.
+
+Default approach:
+
+A4 page
++
+consistent margins
++
+optional report header
++
+image
++
+optional footer/page number
+
+Do not make the margins excessively large.
+
+The image should use the majority of the available page.
+
+==================================================
+16. MULTIPLE IMAGES
+==================================================
+
+Each submitted picture should normally occupy its own PDF page.
+
+Example:
+
+10 uploaded pictures
+
+=
+
+10 image pages
+
+plus optional cover/header page only if the user explicitly chooses it.
+
+Do not automatically put many photographs on one page unless we later add a layout option.
+
+==================================================
+17. IMAGE ORDER
+==================================================
+
+The PDF image order must exactly match the order shown in the application's image list.
+
+If the user reorders the images:
+
+Image 1
+Image 2
+Image 3
+
+to:
+
+Image 3
+Image 1
+Image 2
+
+the generated PDF must use:
+
+Image 3
+Image 1
+Image 2
+
+Do not sort by:
+
+- filename
+- EXIF timestamp
+- file creation date
+- embedded timestamp
+- upload date
+
+unless the user explicitly requests a sorting feature.
+
+==================================================
+18. IMAGE EDITING
+==================================================
+
+Initially support:
+
+- Rotate clockwise
+- Rotate counter-clockwise if useful
+- Delete
+- Reorder
+- Preview
+
+Do not add advanced image editing yet.
+
+Do not add:
+
+- Photoshop-like editing
+- filters
+- AI editing
+- background removal
+- object removal
+- facial recognition
+- OCR
+
+unless explicitly requested later.
+
+==================================================
+19. REPORT INFORMATION
+==================================================
+
+Report metadata can include:
+
+Report Title
+Sales Representative
+Date
+Customer
+Location
+Notes
+
+Keep this information separate from the photograph itself.
+
+Do not modify the original photograph.
+
+==================================================
+20. PDF SECURITY
+==================================================
+
+The desired application should eventually support a secured PDF.
+
+However:
+
+DO NOT install another PDF security/encryption library without asking me first.
+
+First investigate whether the currently installed version of jsPDF can reliably support the required PDF security functionality.
+
+If it can:
+
+Implement it using the existing dependency.
+
+If it cannot:
+
+STOP and ASK ME.
+
+Explain:
+
+- What jsPDF cannot do.
+- What dependency would be required.
+- Why it is needed.
+- Whether there is a lightweight alternative.
+- The exact package you recommend.
+
+Do not automatically install anything.
+
+==================================================
+21. SECURITY PRINCIPLE
+==================================================
+
+The application must not expose sensitive report information unnecessarily.
+
+Since the first version is client-side:
+
+- Do not upload photos.
+- Do not send reports to third-party APIs.
+- Do not log image contents.
+- Do not store report images permanently.
+- Do not store report data in localStorage unless explicitly requested.
+
+Use browser memory for the current report.
+
+When the user refreshes or closes the application, the temporary report can disappear.
+
+==================================================
+22. ERROR HANDLING
+==================================================
+
+Handle common problems gracefully.
+
+Examples:
+
+No images uploaded.
+
+Show:
+
+"Please add at least one picture."
+
+Unsupported image format.
+
+Show:
+
+"This image format is not supported."
+
+Image too large.
+
+Attempt client-side compression.
+
+PDF generation failure.
+
+Show a useful error message.
+
+Do not expose raw stack traces to normal users.
+
+==================================================
+23. PERFORMANCE
+==================================================
+
+Performance is very important.
+
+The application should be lightweight.
+
+Avoid:
+
+- unnecessary React re-renders
+- large dependencies
+- unnecessary API calls
+- server-side image processing
+- unnecessary state management
+- continuous image processing
+- excessive animations
+
+Process images only when needed.
+
+Use browser-image-compression appropriately.
+
+Do not keep multiple unnecessary copies of very large image data in React state.
+
+Use object URLs where appropriate and clean them up when no longer needed.
+
+==================================================
+24. MEMORY MANAGEMENT
+==================================================
+
+Large photographs can consume a lot of browser memory.
+
+Be careful with:
+
+- object URLs
+- Blob URLs
+- Base64 strings
+- canvas objects
+- image previews
+
+Revoke object URLs when they are no longer needed.
+
+Avoid converting every image into Base64 unless necessary for PDF generation.
+
+Do not create duplicate high-resolution copies unnecessarily.
+
+==================================================
+25. REACT CODE STRUCTURE
+==================================================
+
+Use modular React components.
+
+Suggested structure:
+
+src/
+â”‚
+â”œâ”€â”€ components/
+â”‚   â”œâ”€â”€ Header.tsx
+â”‚   â”œâ”€â”€ ReportForm.tsx
+â”‚   â”œâ”€â”€ ImageUploader.tsx
+â”‚   â”œâ”€â”€ ImageGrid.tsx
+â”‚   â”œâ”€â”€ ImageCard.tsx
+â”‚   â”œâ”€â”€ ReportPreview.tsx
+â”‚   â””â”€â”€ ActionBar.tsx
+â”‚
+â”œâ”€â”€ features/
+â”‚   â”œâ”€â”€ images/
+â”‚   â”‚   â”œâ”€â”€ imageTypes.ts
+â”‚   â”‚   â”œâ”€â”€ imageUtils.ts
+â”‚   â”‚   â”œâ”€â”€ imageCompression.ts
+â”‚   â”‚   â””â”€â”€ imageState.ts
+â”‚   â”‚
+â”‚   â””â”€â”€ pdf/
+â”‚       â”œâ”€â”€ pdfGenerator.ts
+â”‚       â”œâ”€â”€ pdfLayout.ts
+â”‚       â””â”€â”€ pdfTypes.ts
+â”‚
+â”œâ”€â”€ lib/
+â”‚   â””â”€â”€ utils.ts
+â”‚
+â”œâ”€â”€ App.tsx
+â”œâ”€â”€ main.tsx
+â””â”€â”€ index.css
+
+Do not create every possible file immediately.
+
+Create files when functionality requires them.
+
+Keep components reasonably small.
+
+==================================================
+26. TYPESCRIPT
+==================================================
+
+Use TypeScript properly.
+
+Avoid:
+
+any
+
+whenever reasonably possible.
+
+Create types/interfaces for:
+
+- Report
+- ReportImage
+- ImageTransform
+- PDFOptions
+- ReportSettings
+
+Use strong typing for application state.
+
+==================================================
+27. STATE MANAGEMENT
+==================================================
+
+Do NOT install a state management library.
+
+Use React state initially.
+
+Keep state simple.
+
+Example conceptual state:
+
+report:
+{
+    title,
+    salesRep,
+    date,
+    customer,
+    location,
+    notes
+}
+
+images:
+[
+    {
+        id,
+        file,
+        previewUrl,
+        rotation,
+        width,
+        height
+    }
+]
+
+Do not introduce Redux/Zustand unless the project genuinely becomes too complex for React state.
+
+If you believe one is necessary:
+
+STOP and ASK ME FIRST.
+
+==================================================
+28. ESLINT
+==================================================
+
+Use the existing ESLint configuration.
+
+Do not replace ESLint with Oxlint.
+
+Do not install another linting system.
+
+Fix ESLint errors rather than disabling ESLint rules unnecessarily.
+
+Do not use:
+
+// eslint-disable
+
+unless there is a legitimate reason.
+
+==================================================
+29. TAILWIND
+==================================================
+
+Use the already-installed Tailwind CSS.
+
+Do not install another CSS framework.
+
+Do not add Bootstrap.
+
+Do not add Material UI.
+
+Do not add another component framework unless explicitly approved.
+
+Keep styling consistent.
+
+==================================================
+30. ICONS
+==================================================
+
+Use the already-installed:
+
+lucide-react
+
+for interface icons.
+
+Do not install another icon library.
+
+==================================================
+31. DRAG AND DROP
+==================================================
+
+Use the already-installed:
+
+@dnd-kit/core
+@dnd-kit/sortable
+@dnd-kit/utilities
+
+for image reordering.
+
+Do not install another drag-and-drop package.
+
+==================================================
+32. PDF GENERATION
+==================================================
+
+Use:
+
+jsPDF
+
+for PDF creation.
+
+Do not install another PDF library unless jsPDF cannot fulfill a required feature.
+
+If another PDF dependency appears necessary:
+
+STOP AND ASK ME FIRST.
+
+==================================================
+33. FILE UPLOAD
+==================================================
+
+Use the browser's native file input and drag-and-drop APIs.
+
+Do not install another upload library.
+
+Support multiple image selection.
+
+Validate:
+
+- file type
+- file size
+- image readability
+
+==================================================
+34. NO DATABASE FOR VERSION 1
+==================================================
+
+Version 1 must NOT use a database.
+
+No Supabase.
+
+No Firebase.
+
+No SQL server.
+
+No MongoDB.
+
+No backend.
+
+The application is intentionally designed to create the PDF locally.
+
+==================================================
+35. FUTURE DATABASE POSSIBILITY
+==================================================
+
+The architecture should leave room for a future Supabase integration.
+
+Possible future features:
+
+- user accounts
+- sales rep accounts
+- report history
+- saved reports
+- admin dashboard
+- report search
+- report storage
+- audit history
+
+But DO NOT implement these now.
+
+==================================================
+36. RESPONSIVE DESIGN
+==================================================
+
+Desktop is the primary environment.
+
+The application should also remain usable on:
+
+- tablets
+- smaller laptop screens
+
+Mobile support is secondary.
+
+Do not compromise desktop usability just to make the UI mobile-first.
+
+==================================================
+37. ACCESSIBILITY
+==================================================
+
+Use:
+
+- semantic HTML
+- proper buttons
+- labels
+- keyboard-accessible controls
+- accessible names for icon buttons
+- visible focus states
+
+Icon-only buttons must have accessible labels/tooltips where appropriate.
+
+==================================================
+38. USER EXPERIENCE
+==================================================
+
+The application should make the workflow obvious.
+
+A user should understand:
+
+1. Add pictures
+2. Arrange pictures
+3. Enter report information
+4. Preview
+5. Generate PDF
+
+Avoid unnecessary screens.
+
+Avoid unnecessary configuration.
+
+==================================================
+39. PROJECT DEVELOPMENT METHOD
+==================================================
+
+DO NOT attempt to build the entire application blindly in one massive change.
+
+Build incrementally.
+
+Recommended phases:
+
+PHASE 1:
+Verify existing project.
+
+PHASE 2:
+Configure Tailwind correctly.
+
+PHASE 3:
+Build basic application shell.
+
+PHASE 4:
+Build report information form.
+
+PHASE 5:
+Build image upload.
+
+PHASE 6:
+Build image preview/grid.
+
+PHASE 7:
+Build drag-and-drop ordering.
+
+PHASE 8:
+Build image rotation.
+
+PHASE 9:
+Build image compression.
+
+PHASE 10:
+Build A4 PDF generation.
+
+PHASE 11:
+Build PDF preview.
+
+PHASE 12:
+Add error handling.
+
+PHASE 13:
+Optimize performance.
+
+PHASE 14:
+Test complete workflow.
+
+PHASE 15:
+Evaluate PDF security.
+
+Do not skip testing between phases.
+
+==================================================
+40. BEFORE MODIFYING THE PROJECT
+==================================================
+
+First inspect:
+
+- package.json
+- vite.config.ts
+- tsconfig.json
+- eslint.config.js
+- src/
+- index.html
+
+Determine what is already configured.
+
+Do not overwrite working configuration unnecessarily.
+
+Do not recreate files that already exist.
+
+Do not change dependency versions unless necessary.
+
+==================================================
+41. DEPENDENCY APPROVAL PROTOCOL
+==================================================
+
+If a new dependency is needed, DO NOT INSTALL IT.
+
+Instead respond to me with:
+
+DEPENDENCY REQUEST
+
+Package:
+[package name]
+
+Purpose:
+[what it does]
+
+Feature requiring it:
+[feature]
+
+Why existing dependencies cannot handle it:
+[reason]
+
+Performance impact:
+[low/medium/high]
+
+Alternative without dependency:
+[possible alternative]
+
+Proposed command:
+[npm install ...]
+
+Waiting for approval.
+
+Then STOP.
+
+==================================================
+42. COMMAND APPROVAL PROTOCOL
+==================================================
+
+You may safely use normal development commands required to inspect/build/test the existing project.
+
+Examples:
+
+npm run dev
+npm run build
+npm run lint
+
+However, commands that install new software/dependencies require my approval.
+
+Never automatically run:
+
+npm install <new-package>
+
+without approval.
+
+==================================================
+43. DO NOT CHANGE THE STACK
+==================================================
+
+Final intended stack:
+
+Frontend:
+React
+
+Language:
+TypeScript
+
+Build tool:
+Vite
+
+CSS:
+Tailwind CSS
+
+Linting:
+ESLint
+
+PDF:
+jsPDF
+
+Image compression:
+browser-image-compression
+
+Drag/drop:
+dnd-kit
+
+Icons:
+Lucide React
+
+Backend:
+None for Version 1
+
+Database:
+None for Version 1
+
+Authentication:
+None for Version 1
+
+Hosting:
+Can be decided later
+
+==================================================
+44. TESTING CHECKLIST
+==================================================
+
+Before considering the application complete, test:
+
+IMAGE TESTS
+
+- One portrait image
+- One landscape image
+- Multiple portrait images
+- Multiple landscape images
+- Mixed portrait and landscape
+- Very large image
+- Small image
+- Different aspect ratios
+- PNG
+- JPG/JPEG
+- WEBP
+- Duplicate-looking filenames
+- Many images
+
+ORDER TESTS
+
+- Upload 3 images
+- Reorder them
+- Verify PDF order matches UI
+
+ROTATION TESTS
+
+- Rotate portrait image
+- Rotate landscape image
+- Generate PDF
+- Verify orientation is correct
+
+PDF TESTS
+
+- A4 page size
+- Correct margins
+- No distortion
+- No image overflow
+- No unexpected cropping
+- Timestamp remains readable
+- Correct image order
+- Correct page count
+
+REPORT INFORMATION TESTS
+
+- Empty optional fields
+- Filled fields
+- Long text
+- Special characters
+
+ERROR TESTS
+
+- No images
+- Unsupported file
+- Corrupt image
+- Extremely large image
+- PDF generation failure
+
+PERFORMANCE TESTS
+
+- Small report
+- Medium report
+- Large report
+
+==================================================
+45. QUALITY REQUIREMENT
+==================================================
+
+Do not consider the application finished merely because it compiles.
+
+It must:
+
+- compile
+- pass ESLint
+- build successfully
+- generate usable PDFs
+- preserve image quality
+- preserve aspect ratios
+- preserve timestamps
+- handle random image sizes
+- handle portrait/landscape images
+- maintain correct ordering
+- remain responsive
+- avoid unnecessary dependencies
+
+==================================================
+46. IMPORTANT BEHAVIOR
+==================================================
+
+If you encounter a problem:
+
+DO NOT immediately install another package.
+
+First determine whether the problem can be solved using:
+
+- existing dependencies
+- browser APIs
+- React
+- TypeScript
+- CSS
+- jsPDF
+- browser-image-compression
+- dnd-kit
+- Lucide React
+
+Only recommend a new dependency after determining that the existing stack cannot reasonably solve the problem.
+
+If a new dependency is genuinely required:
+
+ASK ME FIRST.
+
+==================================================
+47. STARTING INSTRUCTION
+==================================================
+
+Before writing application code:
+
+1. Inspect the existing project.
+2. Inspect package.json.
+3. Confirm the currently installed dependencies.
+4. Inspect the existing Vite/Tailwind/ESLint configuration.
+5. Identify what is already working.
+6. Do not install anything.
+7. Do not change dependencies.
+8. Do not create a backend.
+9. Do not create a database.
+
+Then give me a short implementation plan.
+
+Wait for my confirmation before making major architectural changes.
+
+Start with Phase 1 and Phase 2 only.
+
+==================================================
+END OF MASTER INSTRUCTION
+==================================================

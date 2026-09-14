@@ -1,0 +1,127 @@
+﻿CRITICAL FIX:
+PIXEL/GEOMETRY-ACCURATE PDF PREVIEW
+
+The current PDF Report Preview does NOT exactly match the downloaded PDF.
+
+This must be fixed.
+
+The preview currently uses browser HTML/CSS rendering while the downloaded PDF uses jsPDF calculations. As a result, image sizes, positions, margins, spacing, and/or transformations can differ between the preview and the final PDF.
+
+The goal is:
+
+THE USER MUST SEE AN ACCURATE REPRESENTATION OF THE ACTUAL GENERATED PDF.
+
+The preview must use the EXACT SAME layout calculations as the final jsPDF output.
+
+==================================================
+1. CORE ARCHITECTURE CHANGE
+==================================================
+
+Create a SINGLE SOURCE OF TRUTH for PDF geometry.
+
+The layout engine must calculate:
+
+- A4 page dimensions
+- page margins
+- header area
+- footer area
+- content area
+- collage cell positions
+- cell width
+- cell height
+- cell padding
+- cell gaps
+- image fitted dimensions
+- image position
+- image rotation
+- image scale
+- image clipping/cropping if applicable
+
+The browser preview and jsPDF generator MUST consume these same calculated values.
+
+Do not maintain two independent layout algorithms.
+
+==================================================
+2. PDF COORDINATE SYSTEM
+==================================================
+
+Use PDF coordinates as the canonical coordinate system.
+
+Use one consistent unit throughout the layout engine.
+
+Prefer millimeters for the logical PDF layout because jsPDF A4 dimensions can be represented naturally in mm.
+
+For A4 portrait:
+
+Width:
+210 mm
+
+Height:
+297 mm
+
+Define constants centrally.
+
+Example:
+
+PAGE_WIDTH = 210
+PAGE_HEIGHT = 297
+
+Do not scatter these values throughout the code.
+
+==================================================
+3. SINGLE SOURCE OF TRUTH
+==================================================
+
+The following file should become the central layout authority:
+
+src/features/pdf/pdfLayout.ts
+
+Create reusable functions that return complete layout information.
+
+For example:
+
+calculatePageLayout(...)
+calculateCollageCells(...)
+calculateImagePlacement(...)
+calculateReportLayout(...)
+
+The exact function names may differ depending on the existing code.
+
+The important requirement is that both:
+
+PdfPreview
+
+and:
+
+pdfGenerator
+
+use the same calculations.
+
+==================================================
+4. DO NOT DUPLICATE CALCULATIONS
+==================================================
+
+DO NOT do this:
+
+Preview:
+
+calculate image size using CSS
+
+PDF:
+
+calculate image size separately using jsPDF
+
+That is the current problem.
+
+Instead:
+
+pdfLayout.ts
+
+        â†“
+
+LayoutResult
+
+        â†“
+   â”Œâ”€â”€â”€â”€â”´â”€â”€â”€â”€â”
+   â†“         â†“
+Preview    jsPDF
