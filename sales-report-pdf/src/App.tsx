@@ -242,6 +242,25 @@ export function App() {
       const blob = getPDFBlob(doc)
       if (pdfBlobUrl) revokePreviewUrl(pdfBlobUrl)
       const newUrl = URL.createObjectURL(blob)
+
+      const isMobileDevice =
+        typeof window !== 'undefined' &&
+        (window.matchMedia('(max-width: 768px)').matches ||
+          /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
+            navigator.userAgent
+          ))
+
+      if (isMobileDevice) {
+        const newWindow = window.open(newUrl, '_blank', 'noopener,noreferrer')
+        if (newWindow) {
+          newWindow.opener = null
+        }
+        setPdfBlobUrl(null)
+        setIsPreviewOpen(false)
+        setSuccessMessage('PDF opened in a new tab.')
+        return
+      }
+
       setPdfBlobUrl(newUrl)
       setIsPreviewOpen(true)
     } catch (err) {
