@@ -70,12 +70,12 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
   const estimatedPages = Math.ceil(images.length / collageLayout)
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 p-5 shadow-xs space-y-4">
+    <div className="bg-white rounded-xl border border-slate-200 p-3 sm:p-5 shadow-xs space-y-4">
       {/* Top Header & Layout Controls */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-slate-100">
-        <div className="flex items-center gap-2">
-          <Images className="w-5 h-5 text-blue-600" />
-          <div>
+      <div className="flex flex-col gap-3 pb-3 border-b border-slate-100 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-2 min-w-0">
+          <Images className="w-5 h-5 text-blue-600 shrink-0" />
+          <div className="min-w-0">
             <h2 className="text-base font-semibold text-slate-800">
               Report Photographs ({images.length})
             </h2>
@@ -86,8 +86,8 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
         </div>
 
         {/* Collage Layout Selector */}
-        <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 p-1 rounded-xl">
-          <div className="flex items-center gap-1.5 px-2 text-xs font-semibold text-slate-600">
+        <div className="flex flex-wrap items-center gap-2 bg-slate-50 border border-slate-200 p-1 rounded-xl w-full sm:w-auto">
+          <div className="flex items-center gap-1.5 px-2 text-[11px] sm:text-xs font-semibold text-slate-600">
             <LayoutGrid className="w-3.5 h-3.5 text-slate-500" />
             <span className="hidden md:inline">Page Layout:</span>
           </div>
@@ -97,21 +97,21 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
               key={count}
               type="button"
               onClick={() => onLayoutChange(count)}
-              className={`px-3 py-1.5 text-xs font-medium rounded-lg transition-all ${
+              className={`px-2.5 py-1.5 text-[11px] sm:text-xs font-medium rounded-lg transition-all ${
                 collageLayout === count
                   ? 'bg-blue-600 text-white font-semibold shadow-xs'
                   : 'text-slate-600 hover:bg-slate-200/70 hover:text-slate-900'
               }`}
               title={`${count} picture${count > 1 ? 's' : ''} per PDF page`}
             >
-              {count} {count === 1 ? 'per page' : 'per page'}
+              {count}
             </button>
           ))}
         </div>
       </div>
 
       {/* Helper message showing collage summary */}
-      <div className="flex items-center justify-between text-xs text-slate-500 px-1">
+      <div className="flex flex-col gap-1 text-xs text-slate-500 px-1 sm:flex-row sm:items-center sm:justify-between">
         <span>
           Layout: <strong>{collageLayout} picture{collageLayout > 1 ? 's' : ''} per page</strong>
         </span>
@@ -127,7 +127,7 @@ export const ImageGrid: React.FC<ImageGridProps> = ({
         onDragEnd={handleDragEnd}
       >
         <SortableContext items={images.map((img) => img.id)} strategy={rectSortingStrategy}>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4">
             {images.map((image, index) => (
               <ImageCard
                 key={image.id}

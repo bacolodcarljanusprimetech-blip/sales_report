@@ -24,13 +24,13 @@ export const ImageDetailModal: React.FC<ImageDetailModalProps> = ({
   const isModified = image.rotation !== 0 || Math.abs(currentScale - 1) > 0.01
 
   return (
-    <div className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-xs flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 bg-slate-950/85 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
       <div className="bg-slate-900 border border-slate-700 rounded-2xl max-w-4xl w-full max-h-[90vh] flex flex-col overflow-hidden text-white shadow-2xl">
         {/* Top Header */}
-        <div className="px-5 py-3 border-b border-slate-800 flex items-center justify-between">
-          <div>
-            <h3 className="text-sm font-semibold truncate max-w-md">{image.name}</h3>
-            <p className="text-xs text-slate-400">
+        <div className="px-4 py-3 sm:px-5 border-b border-slate-800 flex items-center justify-between gap-2">
+          <div className="min-w-0">
+            <h3 className="text-sm font-semibold truncate max-w-[55vw] sm:max-w-md">{image.name}</h3>
+            <p className="text-[10px] sm:text-xs text-slate-400 truncate">
               {image.width} × {image.height} px • {formatFileSize(image.size)} • Rotation: {image.rotation}° • Scale: {Math.round(currentScale * 100)}%
             </p>
           </div>
@@ -48,7 +48,7 @@ export const ImageDetailModal: React.FC<ImageDetailModalProps> = ({
         </div>
 
         {/* Image Preview Area */}
-        <div className="flex-1 overflow-hidden p-6 flex items-center justify-center bg-slate-950 relative">
+        <div className="flex-1 overflow-hidden p-3 sm:p-6 flex items-center justify-center bg-slate-950 relative">
           <div className="w-full h-full flex items-center justify-center overflow-hidden rounded-lg border border-slate-800/80 bg-slate-900/40">
             <img
               src={image.previewUrl}
@@ -62,9 +62,9 @@ export const ImageDetailModal: React.FC<ImageDetailModalProps> = ({
         </div>
 
         {/* Bottom Toolbar with Zoom, Rotate, Reset */}
-        <div className="px-5 py-3 bg-slate-900/90 border-t border-slate-800 flex items-center justify-between">
+        <div className="px-3 py-3 sm:px-5 bg-slate-900/90 border-t border-slate-800 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           {/* Zoom Slider & Buttons */}
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto justify-center sm:justify-start">
             <button
               type="button"
               onClick={() => onScaleChange(image.id, Math.max(0.6, +(currentScale - 0.1).toFixed(2)))}
@@ -82,7 +82,7 @@ export const ImageDetailModal: React.FC<ImageDetailModalProps> = ({
               step="0.05"
               value={currentScale}
               onChange={(e) => onScaleChange(image.id, parseFloat(e.target.value))}
-              className="w-32 accent-blue-500 cursor-pointer"
+              className="w-20 sm:w-32 accent-blue-500 cursor-pointer"
             />
 
             <button

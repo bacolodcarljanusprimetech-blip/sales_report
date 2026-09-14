@@ -1,9 +1,8 @@
 import { jsPDF } from 'jspdf'
 import { getOrientedImageDataUrl } from '../images/imageUtils'
 import {
-  calculatePageBounds,
-  getLayoutCells,
-  calculateCellFit,
+  calculateDocumentLayoutPlan,
+  type ImagePlacement,
 } from './pdfLayout'
 import type { PDFGeneratorParams } from './pdfTypes'
 
@@ -24,19 +23,12 @@ function loadImageElement(url: string): Promise<HTMLImageElement> {
  */
 async function getClippedCellDataUrl(
   orientedDataUrl: string,
-  fitX: number,
-  fitY: number,
-  fitW: number,
-  fitH: number,
-  cellX: number,
-  cellY: number,
-  cellW: number,
-  cellH: number
+  placement: ImagePlacement
 ): Promise<string> {
   const pixelRatio = 4
   const canvas = document.createElement('canvas')
-  canvas.width = Math.round(cellW * pixelRatio)
-  canvas.height = Math.round(cellH * pixelRatio)
+  canvas.width = Math.round(placement.cell.width * pixelRatio)
+  canvas.height = Math.round(placement.cell.height * pixelRatio)
   const ctx = canvas.getContext('2d')
   if (!ctx) return orientedDataUrl
 
@@ -46,18 +38,17 @@ async function getClippedCellDataUrl(
     img.onload = resolve
   })
 
-  const relX = (fitX - cellX) * pixelRatio
-  const relY = (fitY - cellY) * pixelRatio
-  const relW = fitW * pixelRatio
-  const relH = fitH * pixelRatio
+  const relX = (placement.x - placement.cell.x) * pixelRatio
+  const relY = (placement.y - placement.cell.y) * pixelRatio
+  const relW = placement.width * pixelRatio
+  const relH = placement.height * pixelRatio
 
   ctx.drawImage(img, relX, relY, relW, relH)
   return canvas.toDataURL('image/jpeg', 0.92)
 }
 
 /**
- * Generates a jsPDF document from the provided report info and images.
- * Supports 1, 2, 3, or 4 pictures per page in collage layouts.
+ * Generates a jsPDF document from the canonical DocumentLayoutPlan.
  */
 export async function generateReportPDF({
   reportInfo,
@@ -69,9 +60,8 @@ export async function generateReportPDF({
     throw new Error('Please add at least one picture.')
   }
 
-  const itemsPerPage = options.collageLayout || 1
-  const totalImagePages = Math.ceil(images.length / itemsPerPage)
-  const totalPages = (options.includeCoverPage ? 1 : 0) + totalImagePages
+  // Canonical layout calculation
+  const plan = calculateDocumentLayoutPlan(reportInfo, images, options)
 
   // Configure optional security encryption
   const encryptionConfig =
@@ -83,205 +73,147 @@ export async function generateReportPDF({
         }
       : undefined
 
-  let currentPageIndex = 0
-
-  // Initial bounds calculation
-  const firstBounds = calculatePageBounds(
-    images[0].width,
-    images[0].height,
-    options.orientation,
-    options.marginMm,
-    options.includeHeader,
-    options.includeFooter,
-    options.collageLayout
-  )
-
+  const firstPage = plan.pages[0]
   const doc = new jsPDF({
-    orientation: options.includeCoverPage ? 'portrait' : firstBounds.isLandscape ? 'l' : 'p',
+    orientation: firstPage.isLandscape ? 'l' : 'p',
     unit: 'mm',
     format: 'a4',
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     encryption: encryptionConfig as any,
   })
 
-  // 1. Cover page (if enabled)
-  if (options.includeCoverPage) {
-    currentPageIndex++
-    onProgress?.(0, totalPages, 'Generating cover page...')
+  const imageMap = new Map(images.map((img) => [img.id, img]))
 
-    doc.setFillColor(30, 41, 59) // Slate 800
-    doc.rect(0, 0, 210, 40, 'F')
-
-    doc.setTextColor(255, 255, 255)
-    doc.setFont('helvetica', 'bold')
-    doc.setFontSize(22)
-    doc.text(reportInfo.title || 'Sales Daily Picture Report', 20, 26)
-
-    doc.setTextColor(51, 65, 85) // Slate 700
-    doc.setFontSize(12)
-    doc.setFont('helvetica', 'normal')
-
-    let yPos = 60
-    const addField = (label: string, value?: string) => {
-      if (!value) return
-      doc.setFont('helvetica', 'bold')
-      doc.text(`${label}:`, 20, yPos)
-      doc.setFont('helvetica', 'normal')
-      doc.text(value, 65, yPos)
-      yPos += 10
-    }
-
-    addField('Sales Representative', reportInfo.salesRep)
-    addField('Report Date', reportInfo.date || new Date().toISOString().split('T')[0])
-    addField('Customer / Client', reportInfo.customer)
-    addField('Location', reportInfo.location)
-    addField('Layout', `${itemsPerPage} picture${itemsPerPage > 1 ? 's' : ''} per page`)
-    addField('Total Photographs', `${images.length} images`)
-
-    if (reportInfo.notes) {
-      yPos += 5
-      doc.setFont('helvetica', 'bold')
-      doc.text('Notes / Remarks:', 20, yPos)
-      yPos += 7
-      doc.setFont('helvetica', 'normal')
-      const splitNotes = doc.splitTextToSize(reportInfo.notes, 170)
-      doc.text(splitNotes, 20, yPos)
-    }
-
-    if (options.includeFooter) {
-      doc.setFontSize(9)
-      doc.setTextColor(148, 163, 184)
-      doc.text(`Page 1 of ${totalPages}`, 105, 285, { align: 'center' })
-    }
-  }
-
-  // 2. Image Pages in Collage Chunks
-  for (let pageIdx = 0; pageIdx < totalImagePages; pageIdx++) {
-    currentPageIndex++
-    const startImgIdx = pageIdx * itemsPerPage
-    const pageImages = images.slice(startImgIdx, startImgIdx + itemsPerPage)
-
+  for (let p = 0; p < plan.pages.length; p++) {
+    const page = plan.pages[p]
     onProgress?.(
-      currentPageIndex,
-      totalPages,
-      `Processing page ${currentPageIndex} of ${totalPages} (${pageImages.length} images)...`
+      page.pageIndex,
+      plan.totalPages,
+      page.isCoverPage
+        ? 'Generating cover page...'
+        : `Rendering page ${page.pageIndex} of ${plan.totalPages}...`
     )
 
-    // Calculate bounds for this page
-    const pageBounds = calculatePageBounds(
-      pageImages[0].width,
-      pageImages[0].height,
-      options.orientation,
-      options.marginMm,
-      options.includeHeader,
-      options.includeFooter,
-      options.collageLayout
-    )
-
-    if (options.includeCoverPage || pageIdx > 0) {
-      doc.addPage('a4', pageBounds.isLandscape ? 'l' : 'p')
+    if (p > 0) {
+      doc.addPage('a4', page.isLandscape ? 'l' : 'p')
     }
 
-    const pageWidth = pageBounds.pageWidth
-    const pageHeight = pageBounds.pageHeight
+    if (page.isCoverPage) {
+      // Render Cover Page
+      doc.setFillColor(30, 41, 59) // Slate 800
+      doc.rect(0, 0, 210, 40, 'F')
 
-    // Render optional page header
-    if (options.includeHeader) {
+      doc.setTextColor(255, 255, 255)
       doc.setFont('helvetica', 'bold')
-      doc.setFontSize(9)
-      doc.setTextColor(71, 85, 105) // Slate 600
+      doc.setFontSize(22)
+      doc.text(reportInfo.title || 'Sales Daily Picture Report', 20, 26)
 
-      const headerTitle = reportInfo.title || 'Sales Picture Report'
-      const metaRight = [reportInfo.salesRep, reportInfo.date || reportInfo.customer]
-        .filter(Boolean)
-        .join(' • ')
-
-      doc.text(headerTitle, options.marginMm, options.marginMm + 5)
-      if (metaRight) {
-        doc.setFont('helvetica', 'normal')
-        doc.text(metaRight, pageWidth - options.marginMm, options.marginMm + 5, { align: 'right' })
-      }
-
-      doc.setDrawColor(226, 232, 240) // Slate 200
-      doc.setLineWidth(0.3)
-      doc.line(options.marginMm, options.marginMm + 8, pageWidth - options.marginMm, options.marginMm + 8)
-    }
-
-    // Get assigned cells on page
-    const cells = getLayoutCells(options.collageLayout, pageBounds)
-
-    // Render each image in its assigned cell
-    for (let cellIdx = 0; cellIdx < pageImages.length; cellIdx++) {
-      const item = pageImages[cellIdx]
-      const cell = cells[cellIdx]
-
-      const imgElement = await loadImageElement(item.previewUrl)
-      const oriented = await getOrientedImageDataUrl(imgElement, item.rotation)
-
-      const fit = calculateCellFit(
-        oriented.width,
-        oriented.height,
-        cell,
-        item.scale,
-        item.positionX,
-        item.positionY
-      )
-
-      if (item.scale > 1.01) {
-        // Render clipped image to prevent cell overflow
-        const clippedDataUrl = await getClippedCellDataUrl(
-          oriented.dataUrl,
-          fit.x,
-          fit.y,
-          fit.width,
-          fit.height,
-          cell.x,
-          cell.y,
-          cell.width,
-          cell.height
-        )
-        doc.addImage(
-          clippedDataUrl,
-          'JPEG',
-          cell.x,
-          cell.y,
-          cell.width,
-          cell.height,
-          undefined,
-          'FAST'
-        )
-      } else {
-        doc.addImage(
-          oriented.dataUrl,
-          'JPEG',
-          fit.x,
-          fit.y,
-          fit.width,
-          fit.height,
-          undefined,
-          'FAST'
-        )
-      }
-    }
-
-    // Render optional page footer
-    if (options.includeFooter) {
+      doc.setTextColor(51, 65, 85) // Slate 700
+      doc.setFontSize(12)
       doc.setFont('helvetica', 'normal')
-      doc.setFontSize(8)
-      doc.setTextColor(148, 163, 184) // Slate 400
 
-      const endImgIdx = Math.min(images.length, startImgIdx + itemsPerPage)
-      const photoLabel =
-        itemsPerPage === 1
-          ? `Photo ${startImgIdx + 1} of ${images.length}`
-          : `Photos ${startImgIdx + 1}–${endImgIdx} of ${images.length}`
+      let yPos = 60
+      const addField = (label: string, value?: string) => {
+        if (!value) return
+        doc.setFont('helvetica', 'bold')
+        doc.text(`${label}:`, 20, yPos)
+        doc.setFont('helvetica', 'normal')
+        doc.text(value, 65, yPos)
+        yPos += 10
+      }
 
-      doc.text(
-        `${photoLabel}  |  Page ${currentPageIndex} of ${totalPages}`,
-        pageWidth / 2,
-        pageHeight - Math.max(4, options.marginMm / 2),
-        { align: 'center' }
-      )
+      addField('Sales Representative', reportInfo.salesRep)
+      addField('Report Date', reportInfo.date || new Date().toISOString().split('T')[0])
+      addField('Customer / Client', reportInfo.customer)
+      addField('Location', reportInfo.location)
+      addField('Layout', `${options.collageLayout} picture${options.collageLayout > 1 ? 's' : ''} per page`)
+      addField('Total Photographs', `${images.length} images`)
+
+      if (reportInfo.notes) {
+        yPos += 5
+        doc.setFont('helvetica', 'bold')
+        doc.text('Notes / Remarks:', 20, yPos)
+        yPos += 7
+        doc.setFont('helvetica', 'normal')
+        const splitNotes = doc.splitTextToSize(reportInfo.notes, 170)
+        doc.text(splitNotes, 20, yPos)
+      }
+
+      if (page.footer) {
+        doc.setFontSize(9)
+        doc.setTextColor(148, 163, 184)
+        doc.text(page.footer.text, page.footer.x, page.footer.y, { align: 'center' })
+      }
+    } else {
+      // Render Image Page Header
+      if (page.header) {
+        doc.setFont('helvetica', 'bold')
+        doc.setFontSize(9)
+        doc.setTextColor(71, 85, 105)
+
+        doc.text(page.header.title, page.header.x, page.header.y)
+        if (page.header.metaRight) {
+          doc.setFont('helvetica', 'normal')
+          doc.text(
+            page.header.metaRight,
+            page.header.x + page.header.width,
+            page.header.y,
+            { align: 'right' }
+          )
+        }
+
+        doc.setDrawColor(226, 232, 240) // Slate 200
+        doc.setLineWidth(0.3)
+        doc.line(
+          page.header.x,
+          page.header.y + 3,
+          page.header.x + page.header.width,
+          page.header.y + 3
+        )
+      }
+
+      // Render Each Image in Its Exact Canonical Placement
+      for (const placement of page.imagePlacements) {
+        const item = imageMap.get(placement.imageId)
+        if (!item) continue
+
+        const imgElement = await loadImageElement(item.previewUrl)
+        const oriented = await getOrientedImageDataUrl(imgElement, placement.rotation)
+
+        if (placement.isClipped) {
+          const clippedDataUrl = await getClippedCellDataUrl(oriented.dataUrl, placement)
+          doc.addImage(
+            clippedDataUrl,
+            'JPEG',
+            placement.cell.x,
+            placement.cell.y,
+            placement.cell.width,
+            placement.cell.height,
+            undefined,
+            'FAST'
+          )
+        } else {
+          doc.addImage(
+            oriented.dataUrl,
+            'JPEG',
+            placement.x,
+            placement.y,
+            placement.width,
+            placement.height,
+            undefined,
+            'FAST'
+          )
+        }
+      }
+
+      // Render Image Page Footer
+      if (page.footer) {
+        doc.setFont('helvetica', 'normal')
+        doc.setFontSize(8)
+        doc.setTextColor(148, 163, 184)
+
+        doc.text(page.footer.text, page.footer.x, page.footer.y, { align: 'center' })
+      }
     }
   }
 
@@ -302,3 +234,4 @@ export function downloadPDFDocument(doc: jsPDF, filename = 'sales_report.pdf'): 
 export function getPDFBlob(doc: jsPDF): Blob {
   return doc.output('blob')
 }
+

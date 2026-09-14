@@ -1,6 +1,11 @@
-import React, { useState } from 'react'
+import React, { useState, useMemo } from 'react'
 import type { ReportImage, ReportInfo } from '../features/images/imageTypes'
 import type { PDFLayoutOptions } from '../features/pdf/pdfTypes'
+import {
+  calculateDocumentLayoutPlan,
+  type PageLayoutResult,
+  type ImagePlacement,
+} from '../features/pdf/pdfLayout'
 import {
   ChevronLeft,
   ChevronRight,
@@ -37,31 +42,27 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
   const [currentPage, setCurrentPage] = useState(1)
   const [viewMode, setViewMode] = useState<'interactive' | 'pdf'>('interactive')
 
-  if (!isOpen) return null
+  // SINGLE SOURCE OF TRUTH: Shared canonical layout plan
+  const plan = useMemo(() => {
+    if (images.length === 0) return null
+    return calculateDocumentLayoutPlan(reportInfo, images, layoutOptions)
+  }, [reportInfo, images, layoutOptions])
 
-  const itemsPerPage = layoutOptions.collageLayout || 1
-  const totalImagePages = Math.ceil(images.length / itemsPerPage)
-  const totalPages = (layoutOptions.includeCoverPage ? 1 : 0) + totalImagePages
+  if (!isOpen || !plan) return null
 
-  const isCoverPage = layoutOptions.includeCoverPage && currentPage === 1
-  const imagePageIdx = layoutOptions.includeCoverPage ? currentPage - 2 : currentPage - 1
-  const pageStartIdx = imagePageIdx * itemsPerPage
-  const pageImages = images.slice(pageStartIdx, pageStartIdx + itemsPerPage)
+  const totalPages = plan.totalPages
+  const activePage: PageLayoutResult =
+    plan.pages[Math.min(currentPage - 1, plan.pages.length - 1)] || plan.pages[0]
 
-  const firstImg = pageImages[0]
-  const rot = firstImg ? ((firstImg.rotation % 360) + 360) % 360 : 0
-  const isRot90or270 = rot === 90 || rot === 270
-  const effectiveW = firstImg ? (isRot90or270 ? firstImg.height : firstImg.width) : 1
-  const effectiveH = firstImg ? (isRot90or270 ? firstImg.width : firstImg.height) : 1
+  // Image lookup map
+  const imageMap = new Map(images.map((img) => [img.id, img]))
 
-  const isLandscape =
-    itemsPerPage > 1
-      ? layoutOptions.orientation === 'landscape'
-      : layoutOptions.orientation === 'landscape'
-      ? true
-      : layoutOptions.orientation === 'portrait'
-      ? false
-      : effectiveW > effectiveH
+  // Scale factor: Convert millimeters to CSS pixels for an accurate A4 representation
+  // In portrait: 210mm -> ~500px (scale ~2.38 px/mm)
+  // In landscape: 297mm -> ~700px (scale ~2.38 px/mm)
+  const pxPerMm = 2.4
+  const sheetWidthPx = activePage.pageWidth * pxPerMm
+  const sheetHeightPx = activePage.pageHeight * pxPerMm
 
   const handlePrev = () => setCurrentPage((p) => Math.max(1, p - 1))
   const handleNext = () => setCurrentPage((p) => Math.min(totalPages, p + 1))
@@ -77,10 +78,10 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
             </div>
             <div>
               <h3 className="text-base font-bold text-slate-900">
-                PDF Report Preview
+                PDF Report Preview (Geometry-Accurate)
               </h3>
               <p className="text-xs text-slate-500">
-                {itemsPerPage} picture{itemsPerPage > 1 ? 's' : ''} per page • Aspect ratio and timestamps preserved
+                Exact millimeter layout matching downloaded jsPDF output
               </p>
             </div>
           </div>
@@ -135,7 +136,7 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
         </div>
 
         {/* Modal Body */}
-        <div className="flex-1 overflow-y-auto p-4 sm:p-6 flex items-center justify-center bg-slate-200/80">
+        <div className="flex-1 overflow-auto p-4 sm:p-6 flex items-center justify-center bg-slate-200/80">
           {viewMode === 'pdf' && pdfBlobUrl ? (
             <iframe
               src={pdfBlobUrl}
@@ -143,22 +144,19 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
               className="w-full h-full rounded-lg shadow-lg border border-slate-300 bg-white"
             />
           ) : (
-            /* Interactive Simulated A4 Sheet */
+            /* Canonical Geometric A4 Sheet Representation */
             <div
-              className={`bg-white shadow-2xl rounded-sm transition-all duration-200 flex flex-col relative ${
-                isCoverPage || !isLandscape
-                  ? 'w-[420px] sm:w-[500px] h-[594px] sm:h-[707px]' // A4 Portrait ratio ~1:1.414
-                  : 'w-[594px] sm:w-[707px] h-[420px] sm:h-[500px]' // A4 Landscape ratio ~1.414:1
-              }`}
+              className="bg-white shadow-2xl rounded-xs relative overflow-hidden transition-all duration-150 select-none"
               style={{
-                padding: `${layoutOptions.marginMm * 1.5}px`,
+                width: `${sheetWidthPx}px`,
+                height: `${sheetHeightPx}px`,
               }}
             >
-              {isCoverPage ? (
+              {activePage.isCoverPage ? (
                 /* Cover Page Content */
-                <div className="flex-1 flex flex-col justify-between border border-dashed border-slate-200 p-6">
+                <div className="w-full h-full p-8 flex flex-col justify-between">
                   <div>
-                    <div className="bg-slate-800 text-white -mx-6 -mt-6 p-6 rounded-t-sm mb-6">
+                    <div className="bg-slate-800 text-white -mx-8 -mt-8 p-8 mb-8">
                       <h2 className="text-xl font-bold">
                         {reportInfo.title || 'Sales Daily Picture Report'}
                       </h2>
@@ -195,7 +193,7 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
                       <div className="flex items-center gap-2">
                         <FileText className="w-4 h-4 text-slate-400" />
                         <span className="font-semibold w-32">Layout:</span>
-                        <span>{itemsPerPage} picture{itemsPerPage > 1 ? 's' : ''} per page</span>
+                        <span>{layoutOptions.collageLayout} picture{layoutOptions.collageLayout > 1 ? 's' : ''} per page</span>
                       </div>
                       <div className="flex items-center gap-2">
                         <FileText className="w-4 h-4 text-slate-400" />
@@ -212,79 +210,91 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
                     </div>
                   </div>
 
-                  {layoutOptions.includeFooter && (
+                  {activePage.footer && (
                     <div className="text-center text-[10px] text-slate-400 pt-2 border-t border-slate-100">
-                      Page 1 of {totalPages}
+                      {activePage.footer.text}
                     </div>
                   )}
                 </div>
-              ) : pageImages.length > 0 ? (
-                /* Collage Page Content */
-                <div className="flex-1 flex flex-col justify-between overflow-hidden">
-                  {/* Page Header */}
-                  {layoutOptions.includeHeader && (
-                    <div className="flex items-center justify-between pb-1 mb-2 border-b border-slate-200 text-[10px] text-slate-600">
-                      <span className="font-semibold truncate">
-                        {reportInfo.title || 'Sales Picture Report'}
-                      </span>
-                      <span className="text-slate-400 truncate">
-                        {[reportInfo.salesRep, reportInfo.date || reportInfo.customer]
-                          .filter(Boolean)
-                          .join(' • ')}
-                      </span>
-                    </div>
-                  )}
-
-                  {/* Collage Grid Layout according to selected mode */}
-                  <div
-                    className={`flex-1 grid gap-2 overflow-hidden ${
-                      itemsPerPage === 1
-                        ? 'grid-cols-1 grid-rows-1'
-                        : itemsPerPage === 2
-                        ? 'grid-cols-1 grid-rows-2'
-                        : itemsPerPage === 3
-                        ? 'grid-cols-1 grid-rows-3'
-                        : 'grid-cols-2 grid-rows-2'
-                    }`}
-                  >
-                    {pageImages.map((img) => (
-                      <div
-                        key={img.id}
-                        className="relative w-full h-full flex items-center justify-center overflow-hidden bg-slate-50/50 rounded-xs border border-slate-100 p-1"
-                      >
-                        <img
-                          src={img.previewUrl}
-                          alt={img.name}
-                          style={{
-                            transform: `rotate(${img.rotation}deg) scale(${img.scale || 1})`,
-                          }}
-                          className="max-w-full max-h-full object-contain rounded-xs transition-transform duration-150"
-                        />
+              ) : (
+                /* Canonical Geometric Image Page */
+                <div className="w-full h-full relative overflow-hidden">
+                  {/* Header rendered at exact mm coordinates */}
+                  {activePage.header && (
+                    <div
+                      className="absolute border-b border-slate-200 pb-1"
+                      style={{
+                        left: `${activePage.header.x * pxPerMm}px`,
+                        top: `${(activePage.header.y - 4) * pxPerMm}px`,
+                        width: `${activePage.header.width * pxPerMm}px`,
+                        height: `${activePage.header.height * pxPerMm}px`,
+                      }}
+                    >
+                      <div className="flex items-center justify-between text-[10px] text-slate-700">
+                        <span className="font-bold truncate">{activePage.header.title}</span>
+                        <span className="text-slate-500 font-normal truncate">
+                          {activePage.header.metaRight}
+                        </span>
                       </div>
-                    ))}
-                    {/* Empty placeholder cells for partial last page */}
-                    {Array.from({ length: itemsPerPage - pageImages.length }).map((_, i) => (
-                      <div
-                        key={`empty-${i}`}
-                        className="w-full h-full rounded-xs border border-dashed border-slate-100/80 bg-slate-50/20"
-                      />
-                    ))}
-                  </div>
+                    </div>
+                  )}
 
-                  {/* Page Footer */}
-                  {layoutOptions.includeFooter && (
-                    <div className="text-center text-[9px] text-slate-400 pt-1 mt-1 border-t border-slate-100">
-                      {itemsPerPage === 1
-                        ? `Photo ${pageStartIdx + 1} of ${images.length}`
-                        : `Photos ${pageStartIdx + 1}–${Math.min(
-                            images.length,
-                            pageStartIdx + itemsPerPage
-                          )} of ${images.length}`}{' '}
-                      | Page {currentPage} of {totalPages}
+                  {/* Collage Cells & Placed Images at Exact Millimeter Coordinates */}
+                  {activePage.cells.map((cell, idx) => {
+                    const placement: ImagePlacement | undefined =
+                      activePage.imagePlacements[idx]
+                    const img = placement ? imageMap.get(placement.imageId) : undefined
+
+                    return (
+                      <div
+                        key={cell.index}
+                        className="absolute overflow-hidden rounded-xs bg-slate-50/40 border border-slate-200/80"
+                        style={{
+                          left: `${cell.x * pxPerMm}px`,
+                          top: `${cell.y * pxPerMm}px`,
+                          width: `${cell.width * pxPerMm}px`,
+                          height: `${cell.height * pxPerMm}px`,
+                        }}
+                      >
+                        {img && placement ? (
+                          <img
+                            src={img.previewUrl}
+                            alt={img.name}
+                            style={{
+                              position: 'absolute',
+                              left: `${(placement.x - cell.x) * pxPerMm}px`,
+                              top: `${(placement.y - cell.y) * pxPerMm}px`,
+                              width: `${placement.width * pxPerMm}px`,
+                              height: `${placement.height * pxPerMm}px`,
+                              transform: `rotate(${placement.rotation}deg)`,
+                              transformOrigin: 'center center',
+                            }}
+                            className="object-fill pointer-events-none select-none max-w-none max-h-none"
+                          />
+                        ) : (
+                          <div className="w-full h-full flex items-center justify-center text-slate-300 text-[10px]">
+                            Empty Cell
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })}
+
+                  {/* Footer rendered at exact mm coordinates */}
+                  {activePage.footer && (
+                    <div
+                      className="absolute text-center text-[9px] text-slate-400"
+                      style={{
+                        left: 0,
+                        top: `${(activePage.footer.y - 3) * pxPerMm}px`,
+                        width: `${activePage.pageWidth * pxPerMm}px`,
+                      }}
+                    >
+                      {activePage.footer.text}
                     </div>
                   )}
                 </div>
-              ) : null}
+              )}
             </div>
           )}
         </div>
@@ -319,3 +329,4 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
     </div>
   )
 }
+

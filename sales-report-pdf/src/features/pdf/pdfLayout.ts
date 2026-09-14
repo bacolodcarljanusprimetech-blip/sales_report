@@ -1,42 +1,77 @@
-import type { CollageLayout } from '../images/imageTypes'
+import type { ReportImage, ReportInfo, CollageLayout } from '../images/imageTypes'
+import type { PDFLayoutOptions } from './pdfTypes'
 
+// Canonical A4 Dimensions in Millimeters
 export const A4_PORTRAIT_WIDTH = 210
 export const A4_PORTRAIT_HEIGHT = 297
 export const A4_LANDSCAPE_WIDTH = 297
 export const A4_LANDSCAPE_HEIGHT = 210
 export const DEFAULT_CELL_GAP_MM = 5
+export const HEADER_HEIGHT_MM = 16
+export const FOOTER_HEIGHT_MM = 10
 
-export interface PageBounds {
-  pageWidth: number
-  pageHeight: number
+export interface LayoutCell {
+  index: number
+  x: number // mm
+  y: number // mm
+  width: number // mm
+  height: number // mm
+}
+
+export interface ImagePlacement {
+  imageId: string
+  cell: LayoutCell
+  // Millimeter coordinates and dimensions on the page
+  x: number
+  y: number
+  width: number
+  height: number
+  rotation: number
+  scale: number
+  isClipped: boolean
+}
+
+export interface HeaderLayout {
+  x: number
+  y: number
+  width: number
+  height: number
+  title: string
+  metaRight: string
+}
+
+export interface FooterLayout {
+  x: number
+  y: number
+  width: number
+  height: number
+  text: string
+}
+
+export interface PageLayoutResult {
+  pageIndex: number // 1-based
+  isCoverPage: boolean
   isLandscape: boolean
+  pageWidth: number // mm
+  pageHeight: number // mm
+  marginMm: number
   contentX: number
   contentY: number
   contentWidth: number
   contentHeight: number
+  header?: HeaderLayout
+  footer?: FooterLayout
+  cells: LayoutCell[]
+  imagePlacements: ImagePlacement[]
 }
 
-export interface LayoutCell {
-  index: number
-  x: number
-  y: number
-  width: number
-  height: number
-}
-
-export interface ScaledImageLayout {
-  x: number
-  y: number
-  width: number
-  height: number
-  clipX?: number
-  clipY?: number
-  clipWidth?: number
-  clipHeight?: number
+export interface DocumentLayoutPlan {
+  totalPages: number
+  pages: PageLayoutResult[]
 }
 
 /**
- * Calculates page dimensions and available content area based on orientation and header/footer settings.
+ * Calculates page dimensions and content area in millimeters.
  */
 export function calculatePageBounds(
   imageWidth: number,
@@ -46,8 +81,7 @@ export function calculatePageBounds(
   hasHeader: boolean,
   hasFooter: boolean,
   collageLayout: CollageLayout = 1
-): PageBounds {
-  // In collage mode (layout > 1), maintain uniform portrait orientation unless forced landscape
+) {
   const isLandscape =
     collageLayout > 1
       ? orientationMode === 'landscape'
@@ -60,9 +94,8 @@ export function calculatePageBounds(
   const pageWidth = isLandscape ? A4_LANDSCAPE_WIDTH : A4_PORTRAIT_WIDTH
   const pageHeight = isLandscape ? A4_LANDSCAPE_HEIGHT : A4_PORTRAIT_HEIGHT
 
-  // Reserve space for header and footer in mm
-  const headerHeight = hasHeader ? 16 : 0
-  const footerHeight = hasFooter ? 10 : 0
+  const headerHeight = hasHeader ? HEADER_HEIGHT_MM : 0
+  const footerHeight = hasFooter ? FOOTER_HEIGHT_MM : 0
 
   const contentX = marginMm
   const contentY = marginMm + headerHeight
@@ -81,15 +114,16 @@ export function calculatePageBounds(
 }
 
 /**
- * Calculates grid cells for a page according to the selected collage layout (1, 2, 3, or 4).
+ * Calculates canonical cell boundaries in millimeters for 1, 2, 3, or 4 cells.
  */
 export function getLayoutCells(
   layout: CollageLayout,
-  bounds: PageBounds,
+  contentX: number,
+  contentY: number,
+  contentWidth: number,
+  contentHeight: number,
   gapMm = DEFAULT_CELL_GAP_MM
 ): LayoutCell[] {
-  const { contentX, contentY, contentWidth, contentHeight } = bounds
-
   if (layout === 1) {
     return [
       {
@@ -103,7 +137,6 @@ export function getLayoutCells(
   }
 
   if (layout === 2) {
-    // 2 cells stacked vertically
     const cellHeight = Math.max(10, (contentHeight - gapMm) / 2)
     return [
       {
@@ -124,7 +157,6 @@ export function getLayoutCells(
   }
 
   if (layout === 3) {
-    // 3 cells stacked vertically
     const cellHeight = Math.max(10, (contentHeight - 2 * gapMm) / 3)
     return [
       {
@@ -188,70 +220,190 @@ export function getLayoutCells(
 }
 
 /**
- * Calculates proportional fit inside an assigned cell, applying user scale and position.
+ * Calculates exact millimeter placement of an image inside its assigned cell.
  */
-export function calculateCellFit(
-  imgWidth: number,
-  imgHeight: number,
-  cell: LayoutCell,
-  userScale = 1,
-  userPosX = 0,
-  userPosY = 0
-): ScaledImageLayout {
-  if (imgWidth <= 0 || imgHeight <= 0) {
+export function calculateImagePlacementInCell(
+  image: ReportImage,
+  cell: LayoutCell
+): ImagePlacement {
+  const normRot = ((image.rotation % 360) + 360) % 360
+  const isRot90or270 = normRot === 90 || normRot === 270
+
+  const effectiveW = isRot90or270 ? image.height : image.width
+  const effectiveH = isRot90or270 ? image.width : image.height
+
+  if (effectiveW <= 0 || effectiveH <= 0) {
     return {
+      imageId: image.id,
+      cell,
       x: cell.x,
       y: cell.y,
       width: cell.width,
       height: cell.height,
-      clipX: cell.x,
-      clipY: cell.y,
-      clipWidth: cell.width,
-      clipHeight: cell.height,
+      rotation: normRot,
+      scale: 1,
+      isClipped: false,
     }
   }
 
-  // 1. Determine maximum automatic proportional fit inside the cell
+  // 1. Automatic proportional contain fit inside cell
   const autoScale = Math.min(
-    cell.width / imgWidth,
-    cell.height / imgHeight
+    cell.width / effectiveW,
+    cell.height / effectiveH
   )
 
-  // 2. Apply user scale
-  const effectiveScale = autoScale * Math.max(0.5, userScale)
-  const finalWidth = imgWidth * effectiveScale
-  const finalHeight = imgHeight * effectiveScale
+  // 2. User scale
+  const userScale = Math.max(0.5, image.scale || 1)
+  const finalScale = autoScale * userScale
+  const finalWidth = effectiveW * finalScale
+  const finalHeight = effectiveH * finalScale
 
   // 3. Center inside cell + user pan offsets
-  const x = cell.x + (cell.width - finalWidth) / 2 + userPosX
-  const y = cell.y + (cell.height - finalHeight) / 2 + userPosY
+  const x = cell.x + (cell.width - finalWidth) / 2 + (image.positionX || 0)
+  const y = cell.y + (cell.height - finalHeight) / 2 + (image.positionY || 0)
 
   return {
+    imageId: image.id,
+    cell,
     x,
     y,
     width: finalWidth,
     height: finalHeight,
-    clipX: cell.x,
-    clipY: cell.y,
-    clipWidth: cell.width,
-    clipHeight: cell.height,
+    rotation: normRot,
+    scale: userScale,
+    isClipped: userScale > 1.01,
   }
 }
 
 /**
- * Calculates proportional fit-to-page dimensions for single-image full-page layout.
+ * CANONICAL SINGLE SOURCE OF TRUTH:
+ * Computes the complete millimeter layout plan for the entire document.
+ * Both the preview and jsPDF generator consume these exact values.
  */
-export function calculateProportionalFit(
-  imgWidth: number,
-  imgHeight: number,
-  bounds: PageBounds
-): ScaledImageLayout {
-  const cell: LayoutCell = {
-    index: 0,
-    x: bounds.contentX,
-    y: bounds.contentY,
-    width: bounds.contentWidth,
-    height: bounds.contentHeight,
+export function calculateDocumentLayoutPlan(
+  reportInfo: ReportInfo,
+  images: ReportImage[],
+  options: PDFLayoutOptions
+): DocumentLayoutPlan {
+  const itemsPerPage = options.collageLayout || 1
+  const totalImagePages = Math.ceil(images.length / itemsPerPage)
+  const totalPages = (options.includeCoverPage ? 1 : 0) + totalImagePages
+
+  const pages: PageLayoutResult[] = []
+  let currentPageIndex = 0
+
+  // 1. Cover Page
+  if (options.includeCoverPage) {
+    currentPageIndex++
+    pages.push({
+      pageIndex: currentPageIndex,
+      isCoverPage: true,
+      isLandscape: false,
+      pageWidth: A4_PORTRAIT_WIDTH,
+      pageHeight: A4_PORTRAIT_HEIGHT,
+      marginMm: options.marginMm,
+      contentX: options.marginMm,
+      contentY: options.marginMm,
+      contentWidth: A4_PORTRAIT_WIDTH - options.marginMm * 2,
+      contentHeight: A4_PORTRAIT_HEIGHT - options.marginMm * 2,
+      footer: options.includeFooter
+        ? {
+            x: A4_PORTRAIT_WIDTH / 2,
+            y: 285,
+            width: A4_PORTRAIT_WIDTH,
+            height: FOOTER_HEIGHT_MM,
+            text: `Page 1 of ${totalPages}`,
+          }
+        : undefined,
+      cells: [],
+      imagePlacements: [],
+    })
   }
-  return calculateCellFit(imgWidth, imgHeight, cell, 1, 0, 0)
+
+  // 2. Image Pages
+  for (let pageIdx = 0; pageIdx < totalImagePages; pageIdx++) {
+    currentPageIndex++
+    const startIdx = pageIdx * itemsPerPage
+    const pageImages = images.slice(startIdx, startIdx + itemsPerPage)
+
+    const firstImg = pageImages[0]
+    const bounds = calculatePageBounds(
+      firstImg.width,
+      firstImg.height,
+      options.orientation,
+      options.marginMm,
+      options.includeHeader,
+      options.includeFooter,
+      options.collageLayout
+    )
+
+    const headerTitle = reportInfo.title || 'Sales Picture Report'
+    const metaRight = [reportInfo.salesRep, reportInfo.date || reportInfo.customer]
+      .filter(Boolean)
+      .join(' • ')
+
+    const headerLayout: HeaderLayout | undefined = options.includeHeader
+      ? {
+          x: options.marginMm,
+          y: options.marginMm + 5,
+          width: bounds.pageWidth - options.marginMm * 2,
+          height: HEADER_HEIGHT_MM,
+          title: headerTitle,
+          metaRight,
+        }
+      : undefined
+
+    const endImgIdx = Math.min(images.length, startIdx + itemsPerPage)
+    const photoLabel =
+      itemsPerPage === 1
+        ? `Photo ${startIdx + 1} of ${images.length}`
+        : `Photos ${startIdx + 1}–${endImgIdx} of ${images.length}`
+
+    const footerLayout: FooterLayout | undefined = options.includeFooter
+      ? {
+          x: bounds.pageWidth / 2,
+          y: bounds.pageHeight - Math.max(4, options.marginMm / 2),
+          width: bounds.pageWidth,
+          height: FOOTER_HEIGHT_MM,
+          text: `${photoLabel}  |  Page ${currentPageIndex} of ${totalPages}`,
+        }
+      : undefined
+
+    const cells = getLayoutCells(
+      options.collageLayout,
+      bounds.contentX,
+      bounds.contentY,
+      bounds.contentWidth,
+      bounds.contentHeight
+    )
+
+    const imagePlacements: ImagePlacement[] = []
+    for (let c = 0; c < pageImages.length; c++) {
+      const placement = calculateImagePlacementInCell(pageImages[c], cells[c])
+      imagePlacements.push(placement)
+    }
+
+    pages.push({
+      pageIndex: currentPageIndex,
+      isCoverPage: false,
+      isLandscape: bounds.isLandscape,
+      pageWidth: bounds.pageWidth,
+      pageHeight: bounds.pageHeight,
+      marginMm: options.marginMm,
+      contentX: bounds.contentX,
+      contentY: bounds.contentY,
+      contentWidth: bounds.contentWidth,
+      contentHeight: bounds.contentHeight,
+      header: headerLayout,
+      footer: footerLayout,
+      cells,
+      imagePlacements,
+    })
+  }
+
+  return {
+    totalPages,
+    pages,
+  }
 }
+

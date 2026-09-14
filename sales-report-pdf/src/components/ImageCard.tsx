@@ -82,7 +82,7 @@ export const ImageCard: React.FC<ImageCardProps> = ({
           <span className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-blue-600 text-white text-xs font-semibold">
             {index + 1}
           </span>
-          <span className="font-medium truncate max-w-[110px] sm:max-w-[140px]" title={image.name}>
+          <span className="font-medium truncate max-w-[80px] sm:max-w-[140px]" title={image.name}>
             {image.name}
           </span>
         </div>
@@ -143,9 +143,9 @@ export const ImageCard: React.FC<ImageCardProps> = ({
       </div>
 
       {/* Per-Image Controls Bar (Scale + Rotate + Reset) */}
-      <div className="px-3 py-1.5 bg-slate-50/70 border-t border-slate-100 flex items-center justify-between text-xs">
+      <div className="px-2.5 sm:px-3 py-1.5 bg-slate-50/70 border-t border-slate-100 flex items-center justify-between text-xs">
         {/* Zoom / Scale Buttons */}
-        <div className="flex items-center gap-1">
+        <div className="flex items-center gap-0.5 sm:gap-1">
           <button
             type="button"
             onClick={handleZoomOut}
