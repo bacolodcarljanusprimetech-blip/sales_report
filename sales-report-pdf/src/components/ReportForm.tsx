@@ -1,6 +1,6 @@
 import React, { useState } from 'react'
 import type { ReportInfo } from '../features/images/imageTypes'
-import { FileText, User, Calendar, Building, MapPin, AlignLeft, ChevronDown, ChevronUp } from 'lucide-react'
+import { FileText, User, ChevronDown, ChevronUp } from 'lucide-react'
 
 interface ReportFormProps {
   reportInfo: ReportInfo
@@ -20,7 +20,7 @@ export const ReportForm: React.FC<ReportFormProps> = ({ reportInfo, onChange }) 
     })
   }
 
-  const filledCount = Object.values(reportInfo).filter(Boolean).length
+  const filledCount = [reportInfo.title, reportInfo.salesRep].filter(Boolean).length
 
   return (
     <div className="bg-white rounded-xl border border-slate-200 p-3 sm:p-5 shadow-xs transition-all">
@@ -84,7 +84,7 @@ export const ReportForm: React.FC<ReportFormProps> = ({ reportInfo, onChange }) 
               className="flex items-center gap-1.5 text-xs font-medium text-slate-700 mb-1"
             >
               <User className="w-3.5 h-3.5 text-slate-400" />
-              Sales Representative
+              Employee
             </label>
             <input
               id="sales-rep"
@@ -97,84 +97,6 @@ export const ReportForm: React.FC<ReportFormProps> = ({ reportInfo, onChange }) 
             />
           </div>
 
-          {/* Report Date */}
-          <div>
-            <label
-              htmlFor="report-date"
-              className="flex items-center gap-1.5 text-xs font-medium text-slate-700 mb-1"
-            >
-              <Calendar className="w-3.5 h-3.5 text-slate-400" />
-              Report Date
-            </label>
-            <input
-              id="report-date"
-              type="date"
-              name="date"
-              value={reportInfo.date}
-              onChange={handleChange}
-              className="w-full px-3 py-2 text-base sm:text-sm bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-            />
-          </div>
-
-          {/* Customer / Client */}
-          <div>
-            <label
-              htmlFor="customer"
-              className="flex items-center gap-1.5 text-xs font-medium text-slate-700 mb-1"
-            >
-              <Building className="w-3.5 h-3.5 text-slate-400" />
-              Customer / Client
-            </label>
-            <input
-              id="customer"
-              type="text"
-              name="customer"
-              value={reportInfo.customer}
-              onChange={handleChange}
-              placeholder="e.g. Acme Corp"
-              className="w-full px-3 py-2 text-base sm:text-sm bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-            />
-          </div>
-
-          {/* Location */}
-          <div>
-            <label
-              htmlFor="location"
-              className="flex items-center gap-1.5 text-xs font-medium text-slate-700 mb-1"
-            >
-              <MapPin className="w-3.5 h-3.5 text-slate-400" />
-              Location
-            </label>
-            <input
-              id="location"
-              type="text"
-              name="location"
-              value={reportInfo.location}
-              onChange={handleChange}
-              placeholder="e.g. Downtown Branch"
-              className="w-full px-3 py-2 text-base sm:text-sm bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
-            />
-          </div>
-
-          {/* Notes */}
-          <div className="sm:col-span-2 lg:col-span-3">
-            <label
-              htmlFor="notes"
-              className="flex items-center gap-1.5 text-xs font-medium text-slate-700 mb-1"
-            >
-              <AlignLeft className="w-3.5 h-3.5 text-slate-400" />
-              Notes / Observations
-            </label>
-            <textarea
-              id="notes"
-              name="notes"
-              rows={2}
-              value={reportInfo.notes}
-              onChange={handleChange}
-              placeholder="Additional comments, meeting outcomes, or context for the visit..."
-              className="w-full px-3 py-2 text-base sm:text-sm bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all resize-y"
-            />
-          </div>
         </div>
       )}
     </div>

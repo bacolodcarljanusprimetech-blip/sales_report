@@ -122,7 +122,7 @@ export async function generateReportPDF({
         yPos += 10
       }
 
-      addField('Sales Representative', reportInfo.salesRep)
+      addField('Employee', reportInfo.salesRep)
       addField('Report Date', reportInfo.date || new Date().toISOString().split('T')[0])
       addField('Customer / Client', reportInfo.customer)
       addField('Location', reportInfo.location)

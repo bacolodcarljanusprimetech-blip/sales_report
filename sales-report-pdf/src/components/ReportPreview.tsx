@@ -167,7 +167,7 @@ export const ReportPreview: React.FC<ReportPreviewProps> = ({
                       {reportInfo.salesRep && (
                         <div className="flex items-center gap-2">
                           <User className="w-4 h-4 text-slate-400" />
-                          <span className="font-semibold w-32">Representative:</span>
+                          <span className="font-semibold w-32">Employee:</span>
                           <span>{reportInfo.salesRep}</span>
                         </div>
                       )}
