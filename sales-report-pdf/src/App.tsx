@@ -18,7 +18,7 @@ import type { PDFLayoutOptions } from './features/pdf/pdfTypes'
 import { AlertCircle, CheckCircle2, X } from 'lucide-react'
 
 const DEFAULT_REPORT_INFO: ReportInfo = {
-  title: 'Daily Sales Activity Report',
+  title: '',
   salesRep: '',
   date: new Date().toISOString().split('T')[0],
   customer: '',
@@ -186,8 +186,19 @@ export function App() {
     setSuccessMessage('New report initialized.')
   }
 
+  const isRequiredMetadataComplete = () => {
+    const title = reportInfo.title.trim()
+    const employee = reportInfo.salesRep.trim()
+    return title.length > 0 && employee.length > 0
+  }
+
   // Generate and download
   const handleGeneratePdf = async () => {
+    if (!isRequiredMetadataComplete()) {
+      setErrorMessage('Report title and employee are required before generating the PDF.')
+      return
+    }
+
     if (images.length === 0) {
       setErrorMessage('Please add at least one picture before generating the PDF.')
       return
@@ -223,6 +234,11 @@ export function App() {
 
   // Preview PDF in modal
   const handlePreviewPdf = async () => {
+    if (!isRequiredMetadataComplete()) {
+      setErrorMessage('Report title and employee are required before previewing the PDF.')
+      return
+    }
+
     if (images.length === 0) {
       setErrorMessage('Please add at least one picture before previewing.')
       return
@@ -347,6 +363,7 @@ export function App() {
         hasImages={images.length > 0}
         isGenerating={isGenerating}
         generationStatus={generationStatus}
+        isRequiredMetadataComplete={isRequiredMetadataComplete()}
         onClearAll={handleClearAll}
         onPreviewPdf={handlePreviewPdf}
         onGeneratePdf={handleGeneratePdf}

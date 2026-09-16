@@ -5,6 +5,7 @@ interface ActionBarProps {
   hasImages: boolean
   isGenerating: boolean
   generationStatus: string | null
+  isRequiredMetadataComplete: boolean
   onClearAll: () => void
   onPreviewPdf: () => void
   onGeneratePdf: () => void
@@ -16,6 +17,7 @@ export const ActionBar: React.FC<ActionBarProps> = ({
   hasImages,
   isGenerating,
   generationStatus,
+  isRequiredMetadataComplete,
   onClearAll,
   onPreviewPdf,
   onGeneratePdf,
@@ -65,7 +67,7 @@ export const ActionBar: React.FC<ActionBarProps> = ({
           <button
             type="button"
             onClick={onPreviewPdf}
-            disabled={!hasImages || isGenerating}
+            disabled={!hasImages || !isRequiredMetadataComplete || isGenerating}
             className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-4 py-2.5 text-xs sm:text-sm font-semibold text-slate-700 bg-white border border-slate-300 hover:bg-slate-50 rounded-lg shadow-xs transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <Eye className="w-4 h-4 text-slate-600" />
@@ -75,7 +77,7 @@ export const ActionBar: React.FC<ActionBarProps> = ({
           <button
             type="button"
             onClick={onGeneratePdf}
-            disabled={!hasImages || isGenerating}
+            disabled={!hasImages || !isRequiredMetadataComplete || isGenerating}
             className="flex-1 sm:flex-initial inline-flex items-center justify-center gap-2 px-5 py-2.5 text-xs sm:text-sm font-bold text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-md hover:shadow-lg transition-all disabled:opacity-40 disabled:cursor-not-allowed"
           >
             <Download className="w-4 h-4" />

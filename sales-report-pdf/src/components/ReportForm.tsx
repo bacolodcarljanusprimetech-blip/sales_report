@@ -9,6 +9,7 @@ interface ReportFormProps {
 
 export const ReportForm: React.FC<ReportFormProps> = ({ reportInfo, onChange }) => {
   const [isExpanded, setIsExpanded] = useState(true)
+  const [requiredError, setRequiredError] = useState<string | null>(null)
 
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
@@ -18,6 +19,21 @@ export const ReportForm: React.FC<ReportFormProps> = ({ reportInfo, onChange }) 
       ...reportInfo,
       [name]: value,
     })
+
+    if (requiredError && value.trim()) {
+      setRequiredError(null)
+    }
+  }
+
+  const handleBlur = (fieldName: string, value: string) => {
+    const trimmedValue = value.trim()
+    if (!trimmedValue) {
+      const label = fieldName === 'title' ? 'Report title' : 'Employee'
+      setRequiredError(`${label} is required.`)
+      return
+    }
+
+    setRequiredError(null)
   }
 
   const filledCount = [reportInfo.title, reportInfo.salesRep].filter(Boolean).length
@@ -43,7 +59,7 @@ export const ReportForm: React.FC<ReportFormProps> = ({ reportInfo, onChange }) 
 
         <div className="flex items-center gap-2 shrink-0">
           <span className="hidden sm:inline text-xs text-slate-400 font-normal">
-            (Optional metadata)
+            (Required fields)
           </span>
           <button
             type="button"
@@ -56,8 +72,15 @@ export const ReportForm: React.FC<ReportFormProps> = ({ reportInfo, onChange }) 
       </div>
 
       {isExpanded && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mt-4 animate-in fade-in duration-150">
-          {/* Title */}
+        <>
+          {requiredError && (
+            <div className="mt-4 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700 animate-in fade-in">
+              <span className="font-medium">{requiredError}</span>
+            </div>
+          )}
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 mt-4 animate-in fade-in duration-150">
+            {/* Title */}
           <div>
             <label
               htmlFor="report-title"
@@ -65,6 +88,7 @@ export const ReportForm: React.FC<ReportFormProps> = ({ reportInfo, onChange }) 
             >
               <FileText className="w-3.5 h-3.5 text-slate-400" />
               Report Title
+              <span className="text-red-500">*</span>
             </label>
             <input
               id="report-title"
@@ -72,7 +96,10 @@ export const ReportForm: React.FC<ReportFormProps> = ({ reportInfo, onChange }) 
               name="title"
               value={reportInfo.title}
               onChange={handleChange}
+              onBlur={(e) => handleBlur('title', e.target.value)}
               placeholder="e.g. Daily Sales Activity Report"
+              required
+              aria-required="true"
               className="w-full px-3 py-2 text-base sm:text-sm bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
             />
           </div>
@@ -85,6 +112,7 @@ export const ReportForm: React.FC<ReportFormProps> = ({ reportInfo, onChange }) 
             >
               <User className="w-3.5 h-3.5 text-slate-400" />
               Employee
+              <span className="text-red-500">*</span>
             </label>
             <input
               id="sales-rep"
@@ -92,12 +120,16 @@ export const ReportForm: React.FC<ReportFormProps> = ({ reportInfo, onChange }) 
               name="salesRep"
               value={reportInfo.salesRep}
               onChange={handleChange}
+              onBlur={(e) => handleBlur('salesRep', e.target.value)}
               placeholder="e.g. John Doe"
+              required
+              aria-required="true"
               className="w-full px-3 py-2 text-base sm:text-sm bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
             />
           </div>
 
-        </div>
+          </div>
+        </>
       )}
     </div>
   )
