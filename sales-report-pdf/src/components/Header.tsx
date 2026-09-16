@@ -26,7 +26,7 @@ export const Header: React.FC<HeaderProps> = ({
           </div>
           <div className="min-w-0">
             <h1 className="text-sm sm:text-base md:text-lg font-bold text-slate-900 leading-tight truncate">
-              Sales Report PDF
+              SALES COLLAGE PDF
             </h1>
             <p className="hidden sm:block text-xs text-slate-500 truncate">
               Professional client-side report generator
