@@ -291,7 +291,7 @@ export function App() {
   }
 
   return (
-    <div className="min-h-screen flex flex-col bg-slate-50 text-slate-900">
+    <div className="min-h-screen flex flex-col bg-[#0c0c14] text-white">
       <Header
         onNewReport={handleNewReport}
         onGeneratePdf={handleGeneratePdf}

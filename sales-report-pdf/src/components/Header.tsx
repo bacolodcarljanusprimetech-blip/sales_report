@@ -1,5 +1,5 @@
 import React from 'react'
-import { FileText, PlusCircle, Download, FileCheck } from 'lucide-react'
+import { PlusCircle, Download, FileCheck } from 'lucide-react'
 
 interface HeaderProps {
   onNewReport: () => void
@@ -17,15 +17,17 @@ export const Header: React.FC<HeaderProps> = ({
   isGenerating,
 }) => {
   return (
-    <header className="sticky top-0 z-30 bg-white border-b border-slate-200 shadow-xs">
+    <header className="sticky top-0 z-30 bg-[#0c0c14] border-b border-white/15 shadow-xs">
       <div className="max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 min-h-[56px] sm:min-h-[64px] flex items-center justify-between gap-2 sm:gap-3 py-2 sm:py-0">
         {/* Logo & App Title */}
         <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-          <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-lg bg-blue-600 text-white flex items-center justify-center shadow-xs shrink-0">
-            <FileText className="w-4 h-4 sm:w-5 sm:h-5" />
-          </div>
+          <img
+            src="/app_logo.png"
+            alt=""
+            className="w-8 h-8 sm:w-10 sm:h-10 rounded-full object-cover shrink-0"
+          />
           <div className="min-w-0">
-            <h1 className="text-sm sm:text-base md:text-lg font-bold text-slate-900 leading-tight truncate">
+            <h1 className="text-sm sm:text-base md:text-lg font-bold text-white leading-tight truncate">
               SALES PHOTO COLLAGE PDF
             </h1>
             <p className="hidden sm:block text-xs text-slate-500 truncate">
