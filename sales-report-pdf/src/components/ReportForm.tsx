@@ -100,7 +100,7 @@ export const ReportForm: React.FC<ReportFormProps> = ({ reportInfo, onChange }) 
               placeholder="e.g. Daily Sales Activity Report"
               required
               aria-required="true"
-              className="w-full px-3 py-2 text-base sm:text-sm bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              className="w-full px-3 py-2 text-base sm:text-sm text-slate-900 placeholder:text-slate-400 caret-blue-700 bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all"
             />
           </div>
 
@@ -124,7 +124,7 @@ export const ReportForm: React.FC<ReportFormProps> = ({ reportInfo, onChange }) 
               placeholder="e.g. John Doe"
               required
               aria-required="true"
-              className="w-full px-3 py-2 text-base sm:text-sm bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              className="w-full px-3 py-2 text-base sm:text-sm text-slate-900 placeholder:text-slate-400 caret-blue-700 bg-slate-50 border border-slate-200 rounded-lg focus:bg-white focus:outline-hidden focus:ring-2 focus:ring-blue-500/30 focus:border-blue-500 transition-all"
             />
           </div>
 
